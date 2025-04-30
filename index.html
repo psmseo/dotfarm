@@ -2,19 +2,74 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>도트팜</title>
   <style>
-    body { font-family: sans-serif; text-align: center; background: #f9f9f9; margin: 0; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 10px;
+    }
     .hidden { display: none; }
-    .grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; justify-content: center; margin-top: 20px; }
-    .tile { width: 100px; height: 100px; background: #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      justify-content: center;
+      max-width: 360px;
+      margin: 20px auto;
+    }
+    .tile {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 1.5rem;
+    }
     .planted { background: #a0d468; }
-    .grown { background: #ffcc00; animation: blink 1s infinite alternate; }
-    @keyframes blink { from { opacity: 1; } to { opacity: 0.5; } }
-    .crop-buttons button { margin: 5px; padding: 10px 15px; font-size: 16px; border-radius: 6px; cursor: pointer; }
-    .emoji-button { font-size: 30px; margin: 10px; cursor: pointer; padding: 10px; border: 2px solid transparent; border-radius: 10px; display: inline-block; }
-    .emoji-button.selected { border-color: #4CAF50; background-color: #eaffea; }
-    #emojiList { margin-top: 20px; }
+    .grown {
+      background: #ffcc00;
+      animation: blink 1s infinite alternate;
+    }
+    @keyframes blink {
+      from { opacity: 1; }
+      to { opacity: 0.5; }
+    }
+    .crop-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 10px auto;
+      gap: 10px;
+    }
+    .crop-buttons button {
+      padding: 10px 12px;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .emoji-button {
+      font-size: 30px;
+      margin: 6px;
+      cursor: pointer;
+      padding: 10px;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      display: inline-block;
+    }
+    .emoji-button.selected {
+      border-color: #4CAF50;
+      background-color: #eaffea;
+    }
+    #emojiList {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -69,9 +124,6 @@
         </text>
       </svg>`;
     const svgUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
-  
-    // 모든 커서에 적용
-
     const styleTag = document.createElement("style");
     styleTag.innerHTML = `
       body, button, input, textarea, select, * {
@@ -81,7 +133,6 @@
     document.head.appendChild(styleTag);
   }
 
-
   function startGame() {
     if (!selectedEmoji) return alert("이모지를 선택해주세요!");
     document.getElementById("emojiSelect").classList.add("hidden");
@@ -89,7 +140,6 @@
     updateCursor();
   }
 
-  // Game logic below
   const farm = document.getElementById('farm');
   const goldEl = document.getElementById('gold');
   const selectedCropEl = document.getElementById('selectedCrop');
@@ -145,11 +195,9 @@
   function harvest(tile) {
     const cropKey = tile.dataset.crop;
     const crop = crops[cropKey];
-
     tile.textContent = '';
     tile.dataset.state = 'empty';
     tile.classList.remove('grown');
-
     gold += crop.reward;
     updateUI();
   }
@@ -167,3 +215,4 @@
 
 </body>
 </html>
+
