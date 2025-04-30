@@ -1,1 +1,169 @@
-# dotfarm
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>도트팜</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f9f9f9; margin: 0; }
+    .hidden { display: none; }
+    .grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; justify-content: center; margin-top: 20px; }
+    .tile { width: 100px; height: 100px; background: #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; }
+    .planted { background: #a0d468; }
+    .grown { background: #ffcc00; animation: blink 1s infinite alternate; }
+    @keyframes blink { from { opacity: 1; } to { opacity: 0.5; } }
+    .crop-buttons button { margin: 5px; padding: 10px 15px; font-size: 16px; border-radius: 6px; cursor: pointer; }
+    .emoji-button { font-size: 30px; margin: 10px; cursor: pointer; padding: 10px; border: 2px solid transparent; border-radius: 10px; display: inline-block; }
+    .emoji-button.selected { border-color: #4CAF50; background-color: #eaffea; }
+    #emojiList { margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<div id="emojiSelect">
+  <h2>🐾 캐릭터 이모지 선택</h2>
+  <div id="emojiList"></div>
+  <button onclick="startGame()" style="margin-top: 10px;">게임 시작</button>
+</div>
+
+<div id="gameScreen" class="hidden">
+  <h1>🌿 도트팜</h1>
+  <p>💰 돈: <span id="gold">200</span> G</p>
+
+  <div class="crop-buttons">
+    <button onclick="selectCrop('wheat')">🌱 밀 (10원)</button>
+    <button onclick="selectCrop('potato')">🥔 감자 (100원)</button>
+    <button onclick="selectCrop('carrot')">🥕 당근 (500원)</button>
+  </div>
+
+  <p>선택 작물: <strong id="selectedCrop">🌱 wheat</strong></p>
+  <div class="grid" id="farm"></div>
+</div>
+
+<script>
+  const emojiOptions = ['🐱', '🐶', '🐰', '🐸', '🦊', '🐥', '🐼', '🐹'];
+  let selectedEmoji = localStorage.getItem('dotfarm_avatar_emoji') || '';
+  const emojiList = document.getElementById("emojiList");
+
+  emojiOptions.forEach(emoji => {
+    const btn = document.createElement("span");
+    btn.textContent = emoji;
+    btn.classList.add("emoji-button");
+    if (emoji === selectedEmoji) btn.classList.add("selected");
+    btn.onclick = () => {
+      document.querySelectorAll(".emoji-button").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedEmoji = emoji;
+      localStorage.setItem("dotfarm_avatar_emoji", emoji);
+      updateCursor();
+    };
+    emojiList.appendChild(btn);
+  });
+
+  function updateCursor() {
+    if (!selectedEmoji) return;
+    const svg = `
+      <svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>
+        <text x='16' y='22' text-anchor='middle' dominant-baseline='middle'
+              font-size='24' font-family='Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif'>
+          ${selectedEmoji}
+        </text>
+      </svg>`;
+    const svgUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+  
+    // 모든 커서에 적용
+
+    const styleTag = document.createElement("style");
+    styleTag.innerHTML = `
+      body, button, input, textarea, select, * {
+        cursor: url("${svgUrl}") 16 16, auto !important;
+      }
+    `;
+    document.head.appendChild(styleTag);
+  }
+
+
+  function startGame() {
+    if (!selectedEmoji) return alert("이모지를 선택해주세요!");
+    document.getElementById("emojiSelect").classList.add("hidden");
+    document.getElementById("gameScreen").classList.remove("hidden");
+    updateCursor();
+  }
+
+  // Game logic below
+  const farm = document.getElementById('farm');
+  const goldEl = document.getElementById('gold');
+  const selectedCropEl = document.getElementById('selectedCrop');
+  let gold = 200;
+  let selectedCrop = 'wheat';
+  const crops = {
+    wheat: { emoji: '🌾', growth: 10000, reward: 30, cost: 10 },
+    potato: { emoji: '🥔', growth: 30000, reward: 300, cost: 100 },
+    carrot: { emoji: '🥕', growth: 600000, reward: 2000, cost: 500 },
+  };
+
+  function updateUI() {
+    goldEl.textContent = gold;
+    selectedCropEl.textContent = crops[selectedCrop].emoji + ' ' + selectedCrop;
+  }
+
+  function selectCrop(name) {
+    selectedCrop = name;
+    updateUI();
+  }
+
+  function handleClick(tile) {
+    const state = tile.dataset.state;
+    const crop = crops[selectedCrop];
+
+    if (state === 'empty') {
+      if (gold >= crop.cost) {
+        gold -= crop.cost;
+        plantCrop(tile, selectedCrop);
+        updateUI();
+      } else {
+        alert("돈이 부족합니다!");
+      }
+    } else if (state === 'grown') {
+      harvest(tile);
+    }
+  }
+
+  function plantCrop(tile, cropKey) {
+    tile.textContent = '🌱';
+    tile.dataset.state = 'growing';
+    tile.classList.add('planted');
+    tile.dataset.crop = cropKey;
+
+    setTimeout(() => {
+      tile.textContent = crops[cropKey].emoji;
+      tile.dataset.state = 'grown';
+      tile.classList.remove('planted');
+      tile.classList.add('grown');
+    }, crops[cropKey].growth);
+  }
+
+  function harvest(tile) {
+    const cropKey = tile.dataset.crop;
+    const crop = crops[cropKey];
+
+    tile.textContent = '';
+    tile.dataset.state = 'empty';
+    tile.classList.remove('grown');
+
+    gold += crop.reward;
+    updateUI();
+  }
+
+  for (let i = 0; i < 9; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.dataset.state = 'empty';
+    tile.addEventListener('click', () => handleClick(tile));
+    farm.appendChild(tile);
+  }
+
+  updateUI();
+</script>
+
+</body>
+</html>
